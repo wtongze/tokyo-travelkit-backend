@@ -2,3 +2,5 @@ node_modules/
 build/
 .husky/
 .eslintcache
+database.sqlite3
+.env
