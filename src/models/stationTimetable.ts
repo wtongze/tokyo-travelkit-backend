@@ -3,22 +3,22 @@ import sequelize from '../database';
 import { MultiLangObject } from './common';
 
 interface StationTimetableObject {
-  odptArrivalTime: string | null;
-  odptDepartureTime: string | null;
-  odptOriginStation: string[] | null;
-  odptDestinationStation: string[] | null;
-  odptViaStation: string[] | null;
-  odptViaRailway: string[] | null;
-  odptTrain: string | null;
-  odptTrainNumber: string | null;
-  odptTrainType: string | null;
-  odptTrainName: MultiLangObject[] | null;
-  odptTrainOwner: string | null;
-  odptIsLast: boolean | null;
-  odptIsOrigin: boolean | null;
-  odptPlatformNumber: string | null;
-  odptCarCompositions: number | null;
-  odptNote: MultiLangObject | null;
+  odptArrivalTime?: string;
+  odptDepartureTime?: string;
+  odptOriginStation?: string[];
+  odptDestinationStation?: string[];
+  odptViaStation?: string[];
+  odptViaRailway?: string[];
+  odptTrain?: string;
+  odptTrainNumber?: string;
+  odptTrainType?: string;
+  odptTrainName?: MultiLangObject[];
+  odptTrainOwner?: string;
+  odptIsLast?: boolean;
+  odptIsOrigin?: boolean;
+  odptPlatformNumber?: string;
+  odptCarCompositions?: number;
+  odptNote?: MultiLangObject;
 }
 
 export class StationTimetable extends Model {

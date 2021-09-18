@@ -4,7 +4,7 @@ import sequelize from '../database';
 
 interface StationOrder {
   odptStation: string;
-  odptStationTitle: MultiLangObject | null;
+  odptStationTitle?: MultiLangObject;
   odptIndex: number;
 }
 

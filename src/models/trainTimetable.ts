@@ -3,13 +3,13 @@ import sequelize from '../database';
 import { MultiLangObject } from './common';
 
 interface TrainTimetableObject {
-  odptArrivalTime: string | null;
-  odptArrivalStation: string | null;
-  odptDepartureTime: string | null;
-  odptDepartureStation: string | null;
-  odptPlatformNumber: string | null;
-  odptPlatformName: MultiLangObject | null;
-  odptNote: MultiLangObject | null;
+  odptArrivalTime?: string;
+  odptArrivalStation?: string;
+  odptDepartureTime?: string;
+  odptDepartureStation?: string;
+  odptPlatformNumber?: string;
+  odptPlatformName?: MultiLangObject;
+  odptNote?: MultiLangObject;
 }
 
 export class TrainTimetable extends Model {
