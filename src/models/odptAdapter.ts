@@ -120,7 +120,7 @@ function toTrainTimetable(raw: any): TrainTimetable {
     owlSameAs: raw['owl:sameAs'],
     odptOperator: raw['odpt:operator'],
     odptRailway: raw['odpt:railway'],
-    odptRailDirection: null || raw['odpt:railwayDirection'],
+    odptRailDirection: null || raw['odpt:railDirection'],
     odptCalendar: null || raw['odpt:calendar'],
     odptTrain: null || raw['odpt:train'],
     odptTrainNumber: raw['odpt:trainNumber'],

@@ -17,5 +17,7 @@ module.exports = {
     'prettier/prettier': ['error', { singleQuote: true }],
     'import/order': ['error'],
     'import/prefer-default-export': 'off',
+    'no-restricted-syntax': 'off',
+    'no-await-in-loop': 'off',
   },
 };

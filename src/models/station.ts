@@ -26,7 +26,7 @@ export class Station extends Model {
   odptConnectingRailway!: string[] | null;
 
   // additional property
-  odptConnectingStation!: string[] | null;
+  odptConnectingStation!: (string | null)[] | null;
 
   odptStationTimetable!: string[] | null;
 }
