@@ -4,3 +4,4 @@ build/
 .eslintcache
 database.sqlite3
 .env
+weekdayGraph.json

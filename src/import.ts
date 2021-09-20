@@ -7,6 +7,7 @@ import odptAdapter from './models/odptAdapter';
 import { Station } from './models/station';
 import transferPatch from './transferPatch';
 import { Railway } from './models/railway';
+import { operatorList } from './const';
 
 type StaticRdf =
   | 'odpt:Calendar'
@@ -76,16 +77,6 @@ async function stationTransferPatch() {
     await tempStation.save();
   }
 
-  const operatorList = [
-    'odpt.Operator:Sotetsu',
-    'odpt.Operator:YokohamaMunicipal',
-    'odpt.Operator:TamaMonorail',
-    'odpt.Operator:MIR',
-    'odpt.Operator:TWR',
-    'odpt.Operator:JR-East',
-    'odpt.Operator:TokyoMetro',
-    'odpt.Operator:Toei',
-  ];
   const stations = await Station.findAll({
     where: {
       odptConnectingRailway: {
@@ -174,7 +165,7 @@ async function stationTransferPatch() {
 }
 
 (async () => {
-  database.sync({ force: false });
+  database.sync({ force: true });
   await importStaticRdf('odpt:Calendar');
   await importStaticRdf('odpt:Operator');
   await importStaticRdf('odpt:RailDirection');

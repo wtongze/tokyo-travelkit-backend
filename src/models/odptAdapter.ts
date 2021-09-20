@@ -107,7 +107,26 @@ function toStationTimetable(raw: any): StationTimetable {
     odptStationTitle: null || raw['odpt:stationTitle'],
     odptRailDirection: null || raw['odpt:railDirection'],
     odptCalendar: null || raw['odpt:calendar'],
-    odptStationTimetableObject: raw['odpt:stationTimetableObject'],
+    odptStationTimetableObject: raw['odpt:stationTimetableObject'].map(
+      (i: any) => ({
+        odptArrivalTime: i['odpt:arrivalTime'],
+        odptDepartureTime: i['odpt:departureTime'],
+        odptOriginStation: i['odpt:originStation'],
+        odptDestinationStation: i['odpt:destinationStation'],
+        odptViaStation: i['odpt:viaStation'],
+        odptViaRailway: i['odpt:viaRailway'],
+        odptTrain: i['odpt:train'],
+        odptTrainNumber: i['odpt:trainNumber'],
+        odptTrainType: i['odpt:trainType'],
+        odptTrainName: i['odpt:trainName'],
+        odptTrainOwner: i['odpt:trainOwner'],
+        odptIsLast: i['odpt:isLast'],
+        odptIsOrigin: i['odpt:isOrigin'],
+        odptPlatformNumber: i['odpt:platformNumber'],
+        odptCarCompositions: i['odpt:carCompositions'],
+        odptNote: i['odpt:note'],
+      })
+    ),
     odptNote: null || raw['odpt:note'],
   });
 }
@@ -133,7 +152,17 @@ function toTrainTimetable(raw: any): TrainTimetable {
     odptViaRailway: null || raw['odpt:viaRailway'],
     odptPreviousTrainTimetable: null || raw['odpt:previousTrainTimetable'],
     odptNextTrainTimetable: null || raw['odpt:nextTrainTimetable'],
-    odptTrainTimetableObject: raw['odpt:trainTimetableObject'],
+    odptTrainTimetableObject: raw['odpt:trainTimetableObject'].map(
+      (i: any) => ({
+        odptArrivalTime: i['odpt:arrivalTime'],
+        odptArrivalStation: i['odpt:arrivalStation'],
+        odptDepartureTime: i['odpt:departureTime'],
+        odptDepartureStation: i['odpt:departureStation'],
+        odptPlatformNumber: i['odpt:platformNumber'],
+        odptPlatformName: i['odpt:platformName'],
+        odptNote: i['odpt:note'],
+      })
+    ),
     odptNeedExtraFee: null || raw['odpt:needExtraFee'],
     odptNote: null || raw['odpt:note'],
   });
