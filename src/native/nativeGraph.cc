@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <map>
+#include <queue>
 
 using Object3D = std::map<std::string, std::map<std::string, int>>;
 using Object2D = std::map<std::string, std::string>;
@@ -54,16 +55,97 @@ NativeGraph::NativeGraph(const Napi::CallbackInfo& info) : ObjectWrap(info) {
   importObject(graph, &this->_graph);
 }
 
-Napi::Value NativeGraph::Greet(const Napi::CallbackInfo& info) {
+Napi::Value NativeGraph::test(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
-
   Napi::Number val = Napi::Number::New(
       env,
       this->_graph
           ["10:28@odpt.TrainTimetable:JR-East.ChuoSobuLocal.916B.Weekday"]
           ["10:31@odpt.TrainTimetable:JR-East.ChuoSobuLocal.916B.Weekday"]);
-
   return val;
+}
+
+class Node {
+  std::string name;
+  int cost;
+
+ public:
+  Node(std::string _name, int _cost) {
+    name = _name;
+    cost = _cost;
+  }
+  std::string getName() const { return name; }
+  int getCost() const { return cost; }
+};
+
+class NodeComparator {
+ public:
+  int operator()(const Node& n1, const Node& n2) {
+    return n1.getCost() > n2.getCost();
+  }
+};
+
+Napi::Value NativeGraph::dijkstra(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (info.Length() != 2) {
+    Napi::TypeError::New(env, "Wrong number of arguments")
+        .ThrowAsJavaScriptException();
+  }
+
+  std::string from = info[0].As<Napi::String>().Utf8Value();
+  std::string to = info[1].As<Napi::String>().Utf8Value();
+
+  std::map<std::string, std::string> parentMap;
+  std::map<std::string, int> costMap;
+  std::priority_queue<Node, std::vector<Node>, NodeComparator> pq;
+
+  parentMap[from] = "<END>";
+  costMap[from] = 0;
+  pq.push(Node(from, 0));
+
+  bool found = false;
+  while (!pq.empty()) {
+    Node item = pq.top();
+    pq.pop();
+
+    if (item.getName() == to) {
+      found = true;
+      break;
+    }
+
+    for (auto neighbor : this->_graph[item.getName()]) {
+      std::string neighborKey = neighbor.first;
+      int alt = item.getCost() + neighbor.second;
+
+      if (!costMap.contains(neighborKey) || alt < costMap[neighborKey]) {
+        costMap[neighborKey] = alt;
+        parentMap[neighborKey] = item.getName();
+        pq.push(Node(neighborKey, alt));
+      }
+    }
+  }
+
+  if (found) {
+    int totalCost = costMap[to];
+    std::vector<std::string> tempPath;
+    tempPath.push_back(to);
+    std::string key = to;
+    while (parentMap[key] != "<END>") {
+      tempPath.push_back(parentMap[key]);
+      key = parentMap[key];
+    }
+    tempPath.push_back(from);
+    std::cout << "Found:" << tempPath.size() << " " << totalCost << std::endl;
+
+    Napi::Array path = Napi::Array::New(env, tempPath.size());
+
+    for (unsigned long i = 0; i < tempPath.size(); i++) {
+      path.Set(i, Napi::String::New(env, tempPath[tempPath.size() - 1 - i]));
+    }
+    return path;
+  } else {
+    return Napi::Array::New(env);
+  }
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
@@ -71,7 +153,9 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
       env, "NativeGraph",
       {
           Napi::ObjectWrap<NativeGraph>::InstanceMethod("test",
-                                                        &NativeGraph::Greet),
+                                                        &NativeGraph::test),
+          Napi::ObjectWrap<NativeGraph>::InstanceMethod("dijkstra",
+                                                        &NativeGraph::dijkstra),
       });
 
   exports.Set("NativeGraph", func);

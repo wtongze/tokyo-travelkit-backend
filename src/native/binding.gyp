@@ -9,6 +9,9 @@
         "<!@(node -p \"require('node-addon-api').include\")"
       ],
       'defines': [ 'NAPI_DISABLE_CPP_EXCEPTIONS' ],
+      "xcode_settings": {
+        "OTHER_CFLAGS": [ "-std=c++2a"],
+      },
     }
   ]
 }

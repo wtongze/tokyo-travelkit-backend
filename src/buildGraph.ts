@@ -78,6 +78,7 @@ class Graph {
   }
 
   for (const staId of Object.keys(timeDict)) {
+    graph.addEdge(`${timeDict[staId][0]}@${staId}`, `END@${staId}`, 0);
     for (let i = 0; i < timeDict[staId].length - 1; i += 1) {
       const currTime = timeDict[staId][i];
       const nextTime = timeDict[staId][i + 1];
@@ -86,6 +87,7 @@ class Graph {
         `${nextTime}@${staId}`,
         getTimeDiff(currTime, nextTime)
       );
+      graph.addEdge(`${nextTime}@${staId}`, `END@${staId}`, 0);
     }
 
     const station = await Station.findByPk(staId);
