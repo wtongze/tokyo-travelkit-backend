@@ -100,6 +100,7 @@ class Graph {
   // console.log(Object.keys(timeDict).length);
 
   for (const staId of Object.keys(timeDict)) {
+    graph.addEdge(`START@${staId}`, `${timeDict[staId][0]}@${staId}`, 0);
     graph.addEdge(`${timeDict[staId][0]}@${staId}`, `END@${staId}`, 0);
     for (let i = 0; i < timeDict[staId].length - 1; i += 1) {
       const currTime = timeDict[staId][i];
@@ -109,6 +110,7 @@ class Graph {
         `${nextTime}@${staId}`,
         getTimeDiff(currTime, nextTime)
       );
+      graph.addEdge(`START@${staId}`, `${nextTime}@${staId}`, 0);
       graph.addEdge(`${nextTime}@${staId}`, `END@${staId}`, 0);
     }
 

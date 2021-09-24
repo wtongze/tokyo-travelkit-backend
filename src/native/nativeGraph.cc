@@ -2,6 +2,7 @@
 
 #include <napi.h>
 
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -105,6 +106,12 @@ class NodeComparator {
   }
 };
 
+int getTimeScore(std::string time) {
+  int hour = std::stoi(time.substr(0, 2));
+  int min = std::stoi(time.substr(3, 5));
+  return hour * 60 + min + (hour < 4 ? 24 * 60 : 0);
+}
+
 Napi::Value NativeGraph::dijkstra(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   if (info.Length() != 2) {
@@ -168,7 +175,14 @@ Napi::Value NativeGraph::dijkstra(const Napi::CallbackInfo& info) {
 
           if (this->_heuristicMap.contains(heuristicKey) &&
               this->_heuristicMap[heuristicKey].contains(toKey)) {
-            heuristic = this->_heuristicMap[heuristicKey][toKey] / 1000;
+            heuristic = this->_heuristicMap[heuristicKey][toKey] / 800;
+            if (item.getName().starts_with("START@")) {
+              // std::cout << "start: " << neighborKey << " " << to.substr(0, 5)
+              //           << " " << heuristic << std::endl;
+              int fromTimeScore = getTimeScore(neighborKey.substr(0, 5));
+              int targetTimeScore = getTimeScore(to.substr(0, 5)) - heuristic;
+              heuristic += std::abs(fromTimeScore - targetTimeScore);
+            }
           } else {
             // std::cout << "Heuristic not found: " << heuristicKey <<
             // std::endl;
@@ -188,8 +202,7 @@ Napi::Value NativeGraph::dijkstra(const Napi::CallbackInfo& info) {
       tempPath.push_back(parentMap[key]);
       key = parentMap[key];
     }
-    tempPath.push_back(from);
-    std::cout << "Found:" << tempPath.size() << " " << totalCost << std::endl;
+    std::cout << "Found: " << tempPath.size() << " " << totalCost << std::endl;
 
     Napi::Array path = Napi::Array::New(env, tempPath.size());
 

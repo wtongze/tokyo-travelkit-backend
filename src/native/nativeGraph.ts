@@ -42,7 +42,21 @@ class NativeGraph {
   searchByFromTime(fromTime: string, from: string, to: string): string[] {
     const times: string[] = this.timeDict[from];
     const start = times.find((i) => getTimeScore(i) >= getTimeScore(fromTime));
-    return this.dijkstra(`${start}@${from}`, to);
+    return this.dijkstra(`${start}@${from}`, `END@${to}`);
+  }
+
+  searchByToTime(toTime: string, from: string, to: string): string[] {
+    const times: string[] = this.timeDict[to];
+    const end = times.find((i, index) => {
+      if (index < times.length - 1) {
+        if (getTimeScore(times[index + 1]) > getTimeScore(toTime)) {
+          return true;
+        }
+        return false;
+      }
+      return true;
+    });
+    return this.dijkstra(`START@${from}`, `${end}@${to}`);
   }
 }
 
@@ -56,10 +70,15 @@ const a = new NativeGraph(
 const finish = performance.now();
 
 const now2 = performance.now();
-const result = a.searchByFromTime(
-  '08:00',
-  'odpt.Station:JR-East.Tokaido.Fujisawa',
-  'END@odpt.Station:JR-East.NaritaAirportBranch.NaritaAirportTerminal2and3'
+// const result = a.searchByFromTime(
+//   '07:25',
+//   'odpt.Station:JR-East.NaritaAirportBranch.NaritaAirportTerminal2and3',
+//   'odpt.Station:JR-East.Keiyo.Maihama'
+// );
+const result = a.searchByToTime(
+  '15:00',
+  'odpt.Station:JR-East.NaritaAirportBranch.NaritaAirportTerminal2and3',
+  'odpt.Station:JR-East.Tokaido.Fujisawa'
 );
 const finish2 = performance.now();
 console.log(result);
