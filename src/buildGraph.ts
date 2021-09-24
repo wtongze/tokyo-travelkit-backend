@@ -1,5 +1,7 @@
 import fs from 'fs';
+import path from 'path';
 import { uniq } from 'lodash';
+import { getDistance } from 'geolib';
 import { operatorList } from './const';
 import { Station } from './models/station';
 import { TrainTimetable } from './models/trainTimetable';
@@ -14,8 +16,15 @@ const getTimeScore = (t: string) => {
 const getTimeDiff = (a: string, b: string) =>
   Math.abs(getTimeScore(b) - getTimeScore(a));
 
+const getCachePath = (name: string) =>
+  path.resolve(__dirname, `../cache/${name}`);
+
 interface TimeDict {
   [station: string]: string[];
+}
+
+interface TimetableStationMap {
+  [timetableTime: string]: string;
 }
 
 interface AdjcentList {
@@ -41,6 +50,16 @@ class Graph {
   public toJSON(): string {
     return JSON.stringify(this.adjcentList);
   }
+
+  public toTXT(): string {
+    let out = '';
+    for (const from of Object.keys(this.adjcentList)) {
+      for (const to of Object.keys(this.adjcentList[from])) {
+        out += `${from} ${to} ${this.adjcentList[from][to]}\n`;
+      }
+    }
+    return out;
+  }
 }
 
 (async () => {
@@ -52,6 +71,7 @@ class Graph {
   });
 
   const timeDict: TimeDict = {};
+  const timetableStationMap: TimetableStationMap = {};
   for (const timetable of timetables) {
     for (const obj of timetable.odptTrainTimetableObject) {
       if (obj.odptArrivalStation && obj.odptArrivalTime) {
@@ -76,6 +96,8 @@ class Graph {
       (a, b) => getTimeScore(a) - getTimeScore(b)
     );
   }
+
+  // console.log(Object.keys(timeDict).length);
 
   for (const staId of Object.keys(timeDict)) {
     graph.addEdge(`${timeDict[staId][0]}@${staId}`, `END@${staId}`, 0);
@@ -102,11 +124,13 @@ class Graph {
                     getTimeScore(i) >= getTimeScore(currTime) + TRANSFER_COST
                 );
                 // console.log(currTime, staId, transferTime, transferSta);
-                graph.addEdge(
-                  `${currTime}@${staId}`,
-                  `${transferTime}@${transferSta}`,
-                  TRANSFER_COST
-                );
+                if (transferTime !== undefined) {
+                  graph.addEdge(
+                    `${currTime}@${staId}`,
+                    `${transferTime}@${transferSta}`,
+                    TRANSFER_COST
+                  );
+                }
               }
             }
           }
@@ -151,11 +175,12 @@ class Graph {
         currStopItem.odptArrivalTime === undefined &&
         currStopItem.odptArrivalStation === undefined
       ) {
-        graph.addEdge(
-          `${currStopItem.odptDepartureTime}@${currStopItem.odptDepartureStation}`,
-          `${currStopItem.odptDepartureTime}@${currTimetable.owlSameAs}`,
-          0
-        );
+        const from = `${currStopItem.odptDepartureTime}@${currStopItem.odptDepartureStation}`;
+        const to = `${currStopItem.odptDepartureTime}@${currTimetable.owlSameAs}`;
+        // *
+        graph.addEdge(from, to, 5);
+        timetableStationMap[to] = currStopItem.odptDepartureStation;
+
         if (index > 0) {
           graph.addEdge(
             `${currStopItem.odptDepartureTime}@${currTimetable.owlSameAs}`,
@@ -169,16 +194,17 @@ class Graph {
         currStopItem.odptArrivalTime &&
         currStopItem.odptArrivalStation
       ) {
-        graph.addEdge(
-          `${currStopItem.odptArrivalTime}@${currTimetable.owlSameAs}`,
-          `${currStopItem.odptArrivalTime}@${currStopItem.odptArrivalStation}`,
-          0
-        );
+        const from = `${currStopItem.odptArrivalTime}@${currTimetable.owlSameAs}`;
+        const to = `${currStopItem.odptArrivalTime}@${currStopItem.odptArrivalStation}`;
+        graph.addEdge(from, to, 0);
+        timetableStationMap[from] = currStopItem.odptArrivalStation;
+
         if (index < maxIndex) {
+          // *
           graph.addEdge(
             `${currStopItem.odptArrivalTime}@${currStopItem.odptArrivalStation}`,
             `${currStopItem.odptArrivalTime}@${currTimetable.owlSameAs}`,
-            0
+            5
           );
         }
       } else if (
@@ -187,16 +213,17 @@ class Graph {
         currStopItem.odptArrivalTime &&
         currStopItem.odptArrivalStation
       ) {
-        graph.addEdge(
-          `${currStopItem.odptArrivalTime}@${currTimetable.owlSameAs}`,
-          `${currStopItem.odptArrivalTime}@${currStopItem.odptArrivalStation}`,
-          0
-        );
-        graph.addEdge(
-          `${currStopItem.odptDepartureTime}@${currStopItem.odptDepartureStation}`,
-          `${currStopItem.odptDepartureTime}@${currTimetable.owlSameAs}`,
-          0
-        );
+        const from1 = `${currStopItem.odptArrivalTime}@${currTimetable.owlSameAs}`;
+        const to1 = `${currStopItem.odptArrivalTime}@${currStopItem.odptArrivalStation}`;
+        graph.addEdge(from1, to1, 0);
+        timetableStationMap[from1] = currStopItem.odptArrivalStation;
+
+        const from2 = `${currStopItem.odptDepartureTime}@${currStopItem.odptDepartureStation}`;
+        const to2 = `${currStopItem.odptDepartureTime}@${currTimetable.owlSameAs}`;
+        // *
+        graph.addEdge(from2, to2, 5);
+        timetableStationMap[to2] = currStopItem.odptDepartureStation;
+
         graph.addEdge(
           `${currStopItem.odptArrivalTime}@${currTimetable.owlSameAs}`,
           `${currStopItem.odptDepartureTime}@${currTimetable.owlSameAs}`,
@@ -228,5 +255,50 @@ class Graph {
     }
   }
 
-  fs.writeFileSync('weekdayGraph.json', graph.toJSON());
+  fs.writeFileSync(getCachePath('weekdayGraph.txt'), graph.toTXT());
+  fs.writeFileSync(
+    getCachePath('weekdayTimeDict.json'),
+    JSON.stringify(timeDict)
+  );
+
+  let content = '';
+  Object.keys(timetableStationMap).forEach((key) => {
+    content += `${key} ${timetableStationMap[key]}\n`;
+  });
+  fs.writeFileSync(getCachePath('weekdayTimetableStationMap.txt'), content);
+
+  const heuristicGraph = new Graph();
+  const staIds = Object.keys(timeDict);
+  for (const from of staIds) {
+    for (const to of staIds) {
+      const fromSta = await Station.findByPk(from);
+      const toSta = await Station.findByPk(to);
+
+      if (fromSta && toSta) {
+        if (
+          fromSta.geoLong &&
+          fromSta.geoLat &&
+          toSta.geoLong &&
+          toSta.geoLat
+        ) {
+          const distance = getDistance(
+            {
+              lat: fromSta.geoLat,
+              lon: fromSta.geoLong,
+            },
+            {
+              lat: toSta.geoLat,
+              lon: toSta.geoLong,
+            }
+          );
+
+          heuristicGraph.addEdge(from, to, distance);
+        }
+      }
+    }
+  }
+  fs.writeFileSync(
+    getCachePath('weekdayHeuristicMap.txt'),
+    heuristicGraph.toTXT()
+  );
 })();
