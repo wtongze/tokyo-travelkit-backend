@@ -3,6 +3,7 @@
 node_modules/
 build/
 cache/
+asset/
 .DS_Store
 .eslintcache
 .env

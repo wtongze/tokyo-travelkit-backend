@@ -75,10 +75,10 @@ const now2 = performance.now();
 //   'odpt.Station:JR-East.NaritaAirportBranch.NaritaAirportTerminal2and3',
 //   'odpt.Station:JR-East.Keiyo.Maihama'
 // );
-const result = a.searchByToTime(
-  '15:00',
-  'odpt.Station:JR-East.NaritaAirportBranch.NaritaAirportTerminal2and3',
-  'odpt.Station:JR-East.Tokaido.Fujisawa'
+const result = a.searchByFromTime(
+  '14:00',
+  'odpt.Station:Toei.Shinjuku.Iwamotocho',
+  'odpt.Station:JR-East.Yamanote.Ebisu'
 );
 const finish2 = performance.now();
 console.log(result);

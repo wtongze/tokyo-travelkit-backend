@@ -183,6 +183,9 @@ Napi::Value NativeGraph::dijkstra(const Napi::CallbackInfo& info) {
               int targetTimeScore = getTimeScore(to.substr(0, 5)) - heuristic;
               heuristic += std::abs(fromTimeScore - targetTimeScore);
             }
+            if (heuristicKey.find("JR-East") == std::string::npos) {
+              heuristic *= 4;
+            }
           } else {
             // std::cout << "Heuristic not found: " << heuristicKey <<
             // std::endl;

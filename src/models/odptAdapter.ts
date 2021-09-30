@@ -1,4 +1,5 @@
 import { Calendar } from './calendar';
+import { FlightInformationDeparture } from './flightInformationDeparture';
 import { Operator } from './operator';
 import { RailDirection } from './railDirection';
 import { Railway } from './railway';
@@ -178,6 +179,28 @@ function toTrainType(raw: any): TrainType {
   });
 }
 
+function toFlightInformationDeparture(raw: any): FlightInformationDeparture {
+  return new FlightInformationDeparture({
+    owlSameAs: raw['owl:sameAs'],
+    odptOperator: raw['odpt:operator'],
+    odptAirline: raw['odpt:airline'],
+    odptFlightNumber: raw['odpt:flightNumber'],
+    odptFlightStatus: raw['odpt:flightStatus'],
+    odptFlightInformationSummary: raw['odpt:flightInformationSummary'],
+    odptFlightInformationText: raw['odpt:flightInformationText'],
+    odptScheduledDepartureTime: raw['odpt:scheduledDepartureTime'],
+    odptEstimatedDepartureTime: raw['odpt:estimatedDepartureTime'],
+    odptActualDepartureTime: raw['odpt:actualDepartureTime'],
+    odptDepartureAirport: raw['odpt:departureAirport'],
+    odptDepartureAirportTerminal: raw['odpt:departureAirportTerminal'],
+    odptDepartureGate: raw['odpt:departureGate'],
+    odptCheckInCounter: raw['odpt:checkInCounter'],
+    odptDestinationAirport: raw['odpt:destinationAirport'],
+    odptViaAirport: raw['odpt:viaAirport'],
+    odptAircraftType: raw['odpt:aircraftType'],
+  });
+}
+
 export default {
   toCalendar,
   toOperator,
@@ -188,4 +211,5 @@ export default {
   toStationTimetable,
   toTrainTimetable,
   toTrainType,
+  toFlightInformationDeparture,
 };
