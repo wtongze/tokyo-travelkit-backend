@@ -3,13 +3,13 @@ import { MultiLangObject } from './common';
 import sequelize from '../database';
 
 export class FlightStatus extends Model {
-  dcDate?: string;
+  dcDate!: string | null;
 
   owlSameAs!: string;
 
-  dcTitle?: string;
+  dcTitle!: string | null;
 
-  odptFlightStatusTitle?: MultiLangObject;
+  odptFlightStatusTitle!: MultiLangObject | null;
 }
 
 FlightStatus.init(

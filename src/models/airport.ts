@@ -3,21 +3,21 @@ import { MultiLangObject } from './common';
 import sequelize from '../database';
 
 export class Airport extends Model {
-  dcDate?: string;
+  dcDate!: string | null;
 
   owlSameAs!: string;
 
-  dcTitle?: string;
+  dcTitle!: string | null;
 
-  odptAirportTitle?: MultiLangObject;
+  odptAirportTitle!: MultiLangObject | null;
 
-  odptAirportTerminal?: string[];
+  odptAirportTerminal!: string[] | null;
 
-  geoLong?: number;
+  geoLong!: number | null;
 
-  geoLat?: number;
+  geoLat!: number | null;
 
-  ugRegion?: object;
+  ugRegion!: object | null;
 }
 
 Airport.init(
