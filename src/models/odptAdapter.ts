@@ -1,5 +1,9 @@
+import { Airport } from './airport';
+import { AirportTerminal } from './airportTerminal';
 import { Calendar } from './calendar';
+import { FlightInformationArrival } from './flightInformationArrival';
 import { FlightInformationDeparture } from './flightInformationDeparture';
+import { FlightStatus } from './flightStatus';
 import { Operator } from './operator';
 import { RailDirection } from './railDirection';
 import { Railway } from './railway';
@@ -179,8 +183,45 @@ function toTrainType(raw: any): TrainType {
   });
 }
 
+function toAirport(raw: any): Airport {
+  return Airport.build({
+    dcDate: null || raw['dc:date'],
+    owlSameAs: raw['owl:sameAs'],
+    dcTitle: null || raw['dc:title'],
+    odptAirportTitle: null || raw['odpt:airportTitle'],
+    odptAirportTerminal: null || raw['odpt:airportTerminal'],
+    geoLong: null || raw['geo:long'],
+    geoLat: null || raw['geo:lat'],
+    ugRegion: null || raw['ug:region'],
+  });
+}
+
+function toAirportTerminal(raw: any): AirportTerminal {
+  return AirportTerminal.build({
+    dcDate: null || raw['dc:date'],
+    owlSameAs: raw['owl:sameAs'],
+    dcTitle: null || raw['dc:title'],
+    odptAirportTerminalTitle: null || raw['odpt:airportTerminalTitle'],
+    odptAirport: raw['odpt:airport'],
+    geoLong: null || raw['geo:long'],
+    geoLat: null || raw['geo:lat'],
+    ugRegion: null || raw['ug:region'],
+  });
+}
+
+function toFlightStatus(raw: any): FlightStatus {
+  return FlightStatus.build({
+    dcDate: null || raw['dc:date'],
+    owlSameAs: raw['owl:sameAs'],
+    dcTitle: null || raw['dc:title'],
+    odptFlightStatusTitle: null || raw['odpt:flightStatusTitle'],
+  });
+}
+
 function toFlightInformationDeparture(raw: any): FlightInformationDeparture {
   return new FlightInformationDeparture({
+    dcDate: raw['dc:date'],
+    dctValid: raw['dct:valid'],
     owlSameAs: raw['owl:sameAs'],
     odptOperator: raw['odpt:operator'],
     odptAirline: raw['odpt:airline'],
@@ -201,6 +242,30 @@ function toFlightInformationDeparture(raw: any): FlightInformationDeparture {
   });
 }
 
+function toFlightInformationArrival(raw: any): FlightInformationArrival {
+  return new FlightInformationArrival({
+    dcDate: raw['dc:date'],
+    dctValid: raw['dct:valid'],
+    owlSameAs: raw['owl:sameAs'],
+    odptOperator: raw['odpt:operator'],
+    odptAirline: raw['odpt:airline'],
+    odptFlightNumber: raw['odpt:flightNumber'],
+    odptFlightStatus: raw['odpt:flightStatus'],
+    odptFlightInformationSummary: raw['odpt:flightInformationSummary'],
+    odptFlightInformationText: raw['odpt:flightInformationText'],
+    odptScheduledArrivalTime: raw['odpt:scheduledArrivalTime'],
+    odptEstimatedArrivalTime: raw['odpt:estimatedArrivalTime'],
+    odptActualArrivalTime: raw['odpt:actualArrivalTime'],
+    odptArrivalAirport: raw['odpt:arrivalAirport'],
+    odptArrivalAirportTerminal: raw['odpt:arrivalAirportTerminal'],
+    odptArrivalGate: raw['odpt:arrivalGate'],
+    odptBaggageClaim: raw['odpt:baggageClaim'],
+    odptOriginAirport: raw['odpt:originAirport'],
+    odptViaAirport: raw['odpt:viaAirport'],
+    odptAircraftType: raw['odpt:aircraftType'],
+  });
+}
+
 export default {
   toCalendar,
   toOperator,
@@ -211,5 +276,9 @@ export default {
   toStationTimetable,
   toTrainTimetable,
   toTrainType,
+  toAirport,
+  toAirportTerminal,
+  toFlightStatus,
   toFlightInformationDeparture,
+  toFlightInformationArrival,
 };

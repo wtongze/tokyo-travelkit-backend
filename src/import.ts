@@ -18,7 +18,10 @@ type StaticRdf =
   | 'odpt:TrainType'
   | 'odpt:RailDirection'
   | 'odpt:Railway'
-  | 'odpt:RailwayFare';
+  | 'odpt:RailwayFare'
+  | 'odpt:Airport'
+  | 'odpt:AirportTerminal'
+  | 'odpt:FlightStatus';
 
 async function importStaticRdf(item: StaticRdf): Promise<void> {
   console.log(`Importing ${item}...`);
@@ -59,6 +62,15 @@ async function importStaticRdf(item: StaticRdf): Promise<void> {
       break;
     case 'odpt:TrainType':
       converter = odptAdapter.toTrainType;
+      break;
+    case 'odpt:Airport':
+      converter = odptAdapter.toAirport;
+      break;
+    case 'odpt:AirportTerminal':
+      converter = odptAdapter.toAirportTerminal;
+      break;
+    case 'odpt:FlightStatus':
+      converter = odptAdapter.toFlightStatus;
       break;
     default:
       converter = () => {
@@ -175,6 +187,9 @@ async function stationTransferPatch() {
   await importStaticRdf('odpt:StationTimetable');
   await importStaticRdf('odpt:TrainTimetable');
   await importStaticRdf('odpt:TrainType');
+  await importStaticRdf('odpt:Airport');
+  await importStaticRdf('odpt:AirportTerminal');
+  await importStaticRdf('odpt:FlightStatus');
   await stationTransferPatch();
   console.log('ok');
 })();

@@ -1,4 +1,6 @@
 interface FlightInformationDepartureInterface {
+  dcDate: string;
+  dctValid?: string;
   owlSameAs: string;
   odptOperator: string;
   odptAirline?: string;
@@ -19,6 +21,10 @@ interface FlightInformationDepartureInterface {
 }
 
 export class FlightInformationDeparture {
+  dcDate!: string;
+
+  dctValid?: string;
+
   owlSameAs: string;
 
   odptOperator: string;
@@ -54,6 +60,8 @@ export class FlightInformationDeparture {
   odptAircraftType?: string;
 
   constructor(arg: FlightInformationDepartureInterface) {
+    this.dcDate = arg.dcDate;
+    this.dctValid = arg.dctValid;
     this.owlSameAs = arg.owlSameAs;
     this.odptOperator = arg.odptOperator;
     this.odptAirline = arg.odptAirline;
