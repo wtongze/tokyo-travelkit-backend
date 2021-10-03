@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import commonRouter from './routers/common';
 import flightRouter from './routers/flight';
 import stationRouter from './routers/station';
 
@@ -8,6 +9,7 @@ const port = 3000;
 
 app.use('/flight', flightRouter);
 app.use('/station', stationRouter);
+app.use('/common', commonRouter);
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
