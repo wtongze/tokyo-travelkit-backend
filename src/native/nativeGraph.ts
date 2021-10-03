@@ -35,14 +35,14 @@ class NativeGraph {
     );
   }
 
-  dijkstra(from: string, to: string): string[] {
-    return this.nativeInstance.dijkstra(from, to);
+  findPath(from: string, to: string): string[] {
+    return this.nativeInstance.findPath(from, to);
   }
 
   searchByFromTime(fromTime: string, from: string, to: string): string[] {
     const times: string[] = this.timeDict[from];
     const start = times.find((i) => getTimeScore(i) >= getTimeScore(fromTime));
-    return this.dijkstra(`${start}@${from}`, `END@${to}`);
+    return this.findPath(`${start}@${from}`, `END@${to}`);
   }
 
   searchByToTime(toTime: string, from: string, to: string): string[] {
@@ -56,7 +56,7 @@ class NativeGraph {
       }
       return true;
     });
-    return this.dijkstra(`START@${from}`, `${end}@${to}`);
+    return this.findPath(`START@${from}`, `${end}@${to}`);
   }
 }
 
@@ -78,7 +78,7 @@ const now2 = performance.now();
 const result = a.searchByFromTime(
   '14:00',
   'odpt.Station:Toei.Shinjuku.Iwamotocho',
-  'odpt.Station:JR-East.Yamanote.Ebisu'
+  'odpt.Station:JR-East.NaritaAirportBranch.NaritaAirportTerminal2and3'
 );
 const finish2 = performance.now();
 console.log(result);

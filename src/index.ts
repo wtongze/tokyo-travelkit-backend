@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import commonRouter from './routers/common';
+import directionRouter from './routers/direction';
 import flightRouter from './routers/flight';
 import railwayRouter from './routers/railway';
 import stationRouter from './routers/station';
@@ -13,6 +14,7 @@ app.use('/flight', flightRouter);
 app.use('/station', stationRouter);
 app.use('/railway', railwayRouter);
 app.use('/train', trainRouter);
+app.use('/direction', directionRouter);
 app.use('/common', commonRouter);
 
 app.get('/', (req, res) => {

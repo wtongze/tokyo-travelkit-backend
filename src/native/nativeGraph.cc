@@ -112,7 +112,7 @@ int getTimeScore(std::string time) {
   return hour * 60 + min + (hour < 4 ? 24 * 60 : 0);
 }
 
-Napi::Value NativeGraph::dijkstra(const Napi::CallbackInfo& info) {
+Napi::Value NativeGraph::findPath(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   if (info.Length() != 2) {
     Napi::TypeError::New(env, "Wrong number of arguments")
@@ -183,9 +183,10 @@ Napi::Value NativeGraph::dijkstra(const Napi::CallbackInfo& info) {
               int targetTimeScore = getTimeScore(to.substr(0, 5)) - heuristic;
               heuristic += std::abs(fromTimeScore - targetTimeScore);
             }
-            if (heuristicKey.find("JR-East") == std::string::npos) {
-              heuristic *= 4;
-            }
+            // Avoid operator
+            // if (heuristicKey.find("JR-East") == std::string::npos) {
+            //   heuristic *= 4;
+            // }
           } else {
             // std::cout << "Heuristic not found: " << heuristicKey <<
             // std::endl;
@@ -222,8 +223,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = Napi::ObjectWrap<NativeGraph>::DefineClass(
       env, "NativeGraph",
       {
-          Napi::ObjectWrap<NativeGraph>::InstanceMethod("dijkstra",
-                                                        &NativeGraph::dijkstra),
+          Napi::ObjectWrap<NativeGraph>::InstanceMethod("findPath",
+                                                        &NativeGraph::findPath),
       });
 
   exports.Set("NativeGraph", func);

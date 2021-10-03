@@ -9,7 +9,7 @@ using Object2D = std::map<std::string, std::string>;
 class NativeGraph : public Napi::ObjectWrap<NativeGraph> {
  public:
   NativeGraph(const Napi::CallbackInfo&);
-  Napi::Value dijkstra(const Napi::CallbackInfo&);
+  Napi::Value findPath(const Napi::CallbackInfo&);
 
  private:
   Object3D _graph;
