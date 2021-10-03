@@ -157,7 +157,7 @@ stationRouter.get('/info/:id', async (req, res) => {
       }
       const response = {
         id: station.owlSameAs,
-        stationTitle: station.odptStationTitle || undefined,
+        title: station.odptStationTitle || undefined,
         operatorTitle: operator.odptOperatorTitle || undefined,
         railwayTitle: railway.odptRailwayTitle || undefined,
         stationCode: station.odptStationCode || undefined,
