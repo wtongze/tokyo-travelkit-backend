@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import cors from 'cors';
 import commonRouter from './routers/common';
 import directionRouter from './routers/direction';
 import flightRouter from './routers/flight';
@@ -8,8 +9,9 @@ import stationRouter from './routers/station';
 import trainRouter from './routers/train';
 
 const app = express();
-const port = 3000;
+const port = 4000;
 
+app.use(cors());
 app.use('/flight', flightRouter);
 app.use('/station', stationRouter);
 app.use('/railway', railwayRouter);

@@ -15,7 +15,7 @@ export class Railway extends Model {
 
   dcTitle!: string;
 
-  odptRailwayTitle!: string | null;
+  odptRailwayTitle!: MultiLangObject | null;
 
   odptKana!: string | null;
 

@@ -1,13 +1,23 @@
 import express from 'express';
+import { MultiLangObject } from '../models/common';
 import { Operator } from '../models/operator';
 import { Railway } from '../models/railway';
 import { Station } from '../models/station';
 
 const commonRouter = express.Router();
 
+interface StationItem {
+  id: string;
+  stationCode?: string;
+  title?: MultiLangObject;
+  railwayTitle?: MultiLangObject;
+  operatorTitle?: MultiLangObject;
+  hasStationIcon?: boolean;
+}
+
 commonRouter.get('/stations', async (req, res) => {
   const stations = await Station.findAll();
-  const response: any[] = [];
+  const response: StationItem[] = [];
   for (const station of stations) {
     const railway = await Railway.findByPk(station.odptRailway);
     const operator = await Operator.findByPk(station.odptOperator);
