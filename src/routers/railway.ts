@@ -1,4 +1,5 @@
 import express from 'express';
+import { MultiLangObject } from '../models/common';
 import { Operator } from '../models/operator';
 import { RailDirection } from '../models/railDirection';
 import { Railway } from '../models/railway';
@@ -44,6 +45,27 @@ railwayRouter.get('/info/:id', async (req, res) => {
   }
 });
 
+interface RailwayFareInfo {
+  id: string;
+  operatorTitle?: MultiLangObject;
+  fromStationTitle?: MultiLangObject;
+  toStationTitle?: MultiLangObject;
+  ticketFare: number;
+  icCardFare?: number;
+  childTicketFare?: number;
+  childIcCardFare?: number;
+  viaStation?: {
+    id: string;
+    stationTitle?: MultiLangObject;
+  }[];
+  viaRailway?: {
+    id: string;
+    railwayTitle?: MultiLangObject;
+  }[];
+  ticketType?: string;
+  paymentMethod?: string[];
+}
+
 railwayRouter.get('/fare/:from/:to', async (req, res) => {
   const from = await Station.findByPk(req.params.from);
   const to = await Station.findByPk(req.params.to);
@@ -54,10 +76,13 @@ railwayRouter.get('/fare/:from/:to', async (req, res) => {
         odptToStation: to.owlSameAs,
       },
     });
-    const response: any[] = [];
+    const response: RailwayFareInfo[] = [];
     for (const railwayFare of railwayFareList) {
       const operator = await Operator.findByPk(railwayFare.odptOperator);
-      const viaStation: any[] = [];
+      const viaStation: {
+        id: string;
+        stationTitle?: MultiLangObject;
+      }[] = [];
       for (const viaStationId of railwayFare.odptViaStation || []) {
         const viaStationObj = await Station.findByPk(viaStationId);
         viaStation.push({
@@ -67,19 +92,24 @@ railwayRouter.get('/fare/:from/:to', async (req, res) => {
             : undefined,
         });
       }
-      const viaRailway: any[] = [];
+      const viaRailway: {
+        id: string;
+        railwayTitle?: MultiLangObject;
+      }[] = [];
       for (const viaRailwayId of railwayFare.odptViaRailway || []) {
         const viaRailwayObj = await Railway.findByPk(viaRailwayId);
         viaRailway.push({
           id: viaRailwayId,
-          stationTitle: viaRailwayObj
+          railwayTitle: viaRailwayObj
             ? viaRailwayObj.odptRailwayTitle || undefined
             : undefined,
         });
       }
       response.push({
         id: railwayFare.owlSameAs,
-        operatorTitle: operator ? operator.odptOperatorTitle : undefined,
+        operatorTitle: operator
+          ? operator.odptOperatorTitle || undefined
+          : undefined,
         fromStationTitle: from.odptStationTitle || undefined,
         toStationTitle: to.odptStationTitle || undefined,
         ticketFare: railwayFare.odptTicketFare,

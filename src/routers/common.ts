@@ -1,4 +1,5 @@
 import express from 'express';
+import { sortBy } from 'lodash';
 import { MultiLangObject } from '../models/common';
 import { Operator } from '../models/operator';
 import { Railway } from '../models/railway';
@@ -10,7 +11,9 @@ interface StationItem {
   id: string;
   stationCode?: string;
   title?: MultiLangObject;
+  railway: string;
   railwayTitle?: MultiLangObject;
+  operator: string;
   operatorTitle?: MultiLangObject;
   hasStationIcon?: boolean;
 }
@@ -88,13 +91,15 @@ commonRouter.get('/stations', async (req, res) => {
         id: station.owlSameAs,
         stationCode: station.odptStationCode || undefined,
         title: station.odptStationTitle || undefined,
+        railway: railway.owlSameAs,
         railwayTitle: railway.odptRailwayTitle || undefined,
+        operator: operator.owlSameAs,
         operatorTitle: operator.odptOperatorTitle || undefined,
         hasStationIcon: hasStationIcon || undefined,
       });
     }
   }
-  res.send(response);
+  res.send(sortBy(response, ['hasStationIcon', 'stationCode']));
 });
 
 commonRouter.get('/railways', async (req, res) => {

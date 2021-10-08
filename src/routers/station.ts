@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { Calendar } from '../models/calendar';
+import { MultiLangObject } from '../models/common';
 import { Operator } from '../models/operator';
 import { RailDirection } from '../models/railDirection';
 import { Railway } from '../models/railway';
@@ -104,7 +105,10 @@ stationRouter.get('/info/:id', async (req, res) => {
     const operator = await Operator.findByPk(station.odptOperator);
     const railway = await Railway.findByPk(station.odptRailway);
     if (operator && railway) {
-      const connectingRailway: any[] = [];
+      const connectingRailway: {
+        id: string;
+        railwayTitle?: MultiLangObject;
+      }[] = [];
       for (const railwayId of station.odptConnectingRailway || []) {
         const tempRailway = await Railway.findByPk(railwayId);
         if (tempRailway) {
@@ -118,21 +122,27 @@ stationRouter.get('/info/:id', async (req, res) => {
           });
         }
       }
-      const connectingStation: any[] = [];
+      const connectingStation: {
+        id?: string;
+        stationTitle?: MultiLangObject;
+      }[] = [];
       for (const stationId of station.odptConnectingStation || []) {
         const tempStation = await Station.findByPk(stationId || '');
         if (tempStation) {
           connectingStation.push({
-            id: stationId,
-            stationTitle: tempStation.odptStationTitle,
+            id: stationId || undefined,
+            stationTitle: tempStation.odptStationTitle || undefined,
           });
         } else {
           connectingStation.push({
-            id: stationId,
+            id: stationId || undefined,
           });
         }
       }
-      const stationTimetable: any[] = [];
+      const stationTimetable: {
+        id: string;
+        calendarTitle?: MultiLangObject;
+      }[] = [];
       for (const timetableId of station.odptStationTimetable || []) {
         const timetable = await StationTimetable.findByPk(timetableId);
         if (timetable) {
@@ -160,10 +170,6 @@ stationRouter.get('/info/:id', async (req, res) => {
         title: station.odptStationTitle || undefined,
         operatorTitle: operator.odptOperatorTitle || undefined,
         railwayTitle: railway.odptRailwayTitle || undefined,
-        stationCode: station.odptStationCode || undefined,
-        geoLong: station.geoLong || undefined,
-        geoLat: station.geoLat || undefined,
-        exit: station.odptExit || undefined,
         connectingRailway:
           connectingRailway.length > 0 ? connectingRailway : undefined,
         connectingStation:
