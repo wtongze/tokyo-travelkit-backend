@@ -8,6 +8,22 @@ import { Station } from '../models/station';
 
 const railwayRouter = express.Router();
 
+interface RailwayInfo {
+  id: string;
+  title?: MultiLangObject;
+  kana?: string;
+  operatorTitle?: MultiLangObject;
+  lineCode?: string;
+  color?: string;
+  ascendingRailDirectionTitle?: MultiLangObject;
+  descendingRailDirectionTitle?: MultiLangObject;
+  stationOrder: {
+    station: string;
+    title?: MultiLangObject;
+    index: number;
+  }[];
+}
+
 railwayRouter.get('/info/:id', async (req, res) => {
   const railway = await Railway.findByPk(req.params.id);
   if (railway) {
@@ -19,7 +35,7 @@ railwayRouter.get('/info/:id', async (req, res) => {
       railway.odptDescendingRailDirection || ''
     );
     if (operator && ascendingRailDirection && descendingRailDirection) {
-      const response: any = {
+      const response: RailwayInfo = {
         id: railway.owlSameAs,
         title: railway.odptRailwayTitle || undefined,
         kana: railway.odptKana || undefined,
