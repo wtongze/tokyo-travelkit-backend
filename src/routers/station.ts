@@ -24,7 +24,10 @@ stationRouter.get('/icon/:id', async (req, res) => {
   if (station) {
     try {
       const stationCode = station.odptStationCode || '';
-      if (station.odptOperator === 'odpt.Operator:Keikyu') {
+      if (
+        station.odptOperator === 'odpt.Operator:Keikyu' &&
+        stationCode.match(/^KK(0[1-9]|[1-6][0-9]|7[0-2])$/)
+      ) {
         res.sendFile(getStationIconPath(`Keikyu/${stationCode}.png`));
       }
       if (
@@ -36,10 +39,12 @@ stationRouter.get('/icon/:id', async (req, res) => {
       if (
         station.odptOperator === 'odpt.Operator:Tobu' &&
         (stationCode.match(/^TD-(0[1-9]|[1-2][0-9]|3[0-5])$/) ||
-          stationCode.match(/^TI-(0[1-9]|[1-4][0-9]|5[0-7])$/) ||
-          stationCode.match(/^TJ-(0[1-9]|[1-3][0-9]|4[0-7])$/) ||
-          stationCode.match(/^TN-(0[1-9]|[1-4][0-9]|5[0-8])$/) ||
-          stationCode.match(/^TS-(0[1-9]|[1-4][0-9]|5[0-1])$/))
+          stationCode.match(
+            /^TI-(0[1-9]|1[0-9]|2[0-5]|3[1-9]|4[1-7]|5[1-7])$/
+          ) ||
+          stationCode.match(/^TJ-(0[1-9]|[1-2][0-9]|3[0-8]|4[1-7])$/) ||
+          stationCode.match(/^TN-(0[1-9]|1[0-9]|2[0-5]|5[1-8]|3[1-9]|40)$/) ||
+          stationCode.match(/^TS-(0[1-9]|[1-2][0-9]|30|51|4[1-4])$/))
       ) {
         res.sendFile(
           getStationIconPath(`Tobu/${stationCode.replace('-', '')}.png`)
@@ -47,20 +52,38 @@ stationRouter.get('/icon/:id', async (req, res) => {
       }
       if (
         station.odptOperator === 'odpt.Operator:Toei' &&
-        (stationCode.match(/^NT(0[1-9]|1[0-3])]$/) ||
-          stationCode.match(/^SA(0[1-9]|[1-2][0-9]|30)$/))
+        (stationCode.match(/^NT-(0[1-9]|1[0-3])$/) ||
+          stationCode.match(/^SA-(0[1-9]|[1-2][0-9]|30)$/))
       ) {
         res.sendFile(
           getStationIconPath(`Toei/${stationCode.replace('-', '')}.png`)
         );
       }
-      if (station.odptOperator === 'odpt.Operator:TokyoMetro') {
+      if (
+        station.odptOperator === 'odpt.Operator:TokyoMetro' &&
+        (stationCode.match(/^C(0[1-9]|1[0-9]|20)$/) ||
+          stationCode.match(/^F(0[1-9]|1[0-6])$/) ||
+          stationCode.match(/^G(0[1-9]|1[0-9])$/) ||
+          stationCode.match(/^H(0[1-9]|1[0-9]|20|21)$/) ||
+          stationCode.match(/^M(0[1-9]|1[0-9]|2[0-5])$/) ||
+          stationCode.match(/^Mb0[3-5]$/) ||
+          stationCode.match(/^N(0[1-9]|1[0-9])$/) ||
+          stationCode.match(/^T(0[1-9]|1[0-9]|2[0-3])$/) ||
+          stationCode.match(/^Y(0[1-9]|1[0-9]|2[0-4])$/) ||
+          stationCode.match(/^Z(0[1-9]|1[0-4])/))
+      ) {
         res.sendFile(getStationIconPath(`TokyoMetro/${stationCode}.png`));
       }
-      if (station.odptOperator === 'odpt.Operator:TWR') {
+      if (
+        station.odptOperator === 'odpt.Operator:TWR' &&
+        stationCode.match(/^R[1-8]$/)
+      ) {
         res.sendFile(getStationIconPath(`TWR/${stationCode}.png`));
       }
-      if (station.odptOperator === 'odpt.Operator:Yurikamome') {
+      if (
+        station.odptOperator === 'odpt.Operator:Yurikamome' &&
+        stationCode.match(/^U([1-9]|1[0-6])$/)
+      ) {
         res.sendFile(getStationIconPath(`Yurikamome/${stationCode}.png`));
       }
       if (
@@ -84,8 +107,7 @@ stationRouter.get('/icon/:id', async (req, res) => {
         stationCode.match(/^JM([1-2][0-9]|3[0-5])$/) ||
         stationCode.match(/^JS(0[6-9]|1[0-9]|2[0-4])$/)
       ) {
-        // draw svg
-        res.sendStatus(500);
+        res.sendStatus(404);
       }
     } catch (e) {
       res.sendStatus(500);
@@ -141,7 +163,10 @@ stationRouter.get('/info/:id', async (req, res) => {
       }
       const stationTimetable: {
         id: string;
+        calendar?: string;
         calendarTitle?: MultiLangObject;
+        railDirection?: string;
+        railDirectionTitle?: MultiLangObject;
       }[] = [];
       for (const timetableId of station.odptStationTimetable || []) {
         const timetable = await StationTimetable.findByPk(timetableId);
@@ -149,10 +174,17 @@ stationRouter.get('/info/:id', async (req, res) => {
           const calendar = await Calendar.findByPk(
             timetable.odptCalendar || ''
           );
-          if (calendar) {
+          const railDirection = await RailDirection.findByPk(
+            timetable.odptRailDirection || ''
+          );
+          if (calendar && railDirection) {
             stationTimetable.push({
               id: timetableId,
+              calendar: calendar.owlSameAs,
               calendarTitle: calendar.odptCalendarTitle || undefined,
+              railDirection: railDirection.owlSameAs,
+              railDirectionTitle:
+                railDirection.odptRailDirectionTitle || undefined,
             });
           } else {
             stationTimetable.push({
@@ -186,6 +218,36 @@ stationRouter.get('/info/:id', async (req, res) => {
   }
 });
 
+interface StationTimetableObjectItem {
+  arrivalTime?: string;
+  departureTime?: string;
+  originStation?: { id: string; stationTitle?: MultiLangObject }[];
+  destinationStation?: { id: string; stationTitle?: MultiLangObject }[];
+  viaStation?: { id: string; stationTitle?: MultiLangObject }[];
+  viaRailway?: { id: string; railwayTitle?: MultiLangObject }[];
+  train?: string;
+  trainNumber?: string;
+  trainTypeTitle?: MultiLangObject;
+  trainName?: MultiLangObject[];
+  trainOwner?: MultiLangObject;
+  isLast?: boolean;
+  isOrigin?: boolean;
+  platformNumber?: string;
+  carCompositions?: number;
+  note?: MultiLangObject;
+}
+
+interface StationTimetableItem {
+  id: string;
+  operatorTitle?: MultiLangObject;
+  railwayTitle?: MultiLangObject;
+  stationTitle?: MultiLangObject;
+  railDirectionTitle?: MultiLangObject;
+  calendarTitle?: MultiLangObject;
+  stationTimetableObject?: StationTimetableObjectItem[];
+  note?: MultiLangObject;
+}
+
 stationRouter.get('/timetable/:id', async (req, res) => {
   const timetable = await StationTimetable.findByPk(req.params.id);
   if (timetable) {
@@ -195,15 +257,16 @@ stationRouter.get('/timetable/:id', async (req, res) => {
     );
     const calendar = await Calendar.findByPk(timetable.odptCalendar || '');
     if (operator && railDirection && calendar) {
-      const stationTimetableObject: any[] = [];
+      const stationTimetableObject: StationTimetableObjectItem[] = [];
       for (const item of timetable.odptStationTimetableObject) {
-        const originStation: any[] = [];
+        const originStation: { id: string; stationTitle?: MultiLangObject }[] =
+          [];
         for (const originId of item.odptOriginStation || []) {
           const origin = await Station.findByPk(originId);
           if (origin) {
             originStation.push({
               id: originId,
-              stationTitle: origin.odptStationTitle,
+              stationTitle: origin.odptStationTitle || undefined,
             });
           } else {
             originStation.push({
@@ -211,13 +274,16 @@ stationRouter.get('/timetable/:id', async (req, res) => {
             });
           }
         }
-        const destinationStation: any[] = [];
+        const destinationStation: {
+          id: string;
+          stationTitle?: MultiLangObject;
+        }[] = [];
         for (const destinationId of item.odptDestinationStation || []) {
           const destination = await Station.findByPk(destinationId);
           if (destination) {
             destinationStation.push({
               id: destinationId,
-              stationTitle: destination.odptStationTitle,
+              stationTitle: destination.odptStationTitle || undefined,
             });
           } else {
             originStation.push({
@@ -225,7 +291,7 @@ stationRouter.get('/timetable/:id', async (req, res) => {
             });
           }
         }
-        const viaStation: any[] = [];
+        const viaStation: { id: string; stationTitle?: MultiLangObject }[] = [];
         for (const viaId of item.odptViaStation || []) {
           const station = await Station.findByPk(viaId);
           if (station) {
@@ -239,7 +305,7 @@ stationRouter.get('/timetable/:id', async (req, res) => {
             });
           }
         }
-        const viaRailway: any[] = [];
+        const viaRailway: { id: string; railwayTitle?: MultiLangObject }[] = [];
         for (const viaId of item.odptViaRailway || []) {
           const railway = await Railway.findByPk(viaId);
           if (railway) {
@@ -279,7 +345,7 @@ stationRouter.get('/timetable/:id', async (req, res) => {
           note: item.odptNote,
         });
       }
-      const response: any = {
+      const response: StationTimetableItem = {
         id: timetable.owlSameAs,
         operatorTitle: operator.odptOperatorTitle || undefined,
         railwayTitle: timetable.odptRailwayTitle || undefined,

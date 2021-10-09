@@ -27,7 +27,10 @@ commonRouter.get('/stations', async (req, res) => {
 
     let hasStationIcon = false;
     const stationCode = station.odptStationCode || '';
-    if (station.odptOperator === 'odpt.Operator:Keikyu') {
+    if (
+      station.odptOperator === 'odpt.Operator:Keikyu' &&
+      stationCode.match(/^KK(0[1-9]|[1-6][0-9]|7[0-2])$/)
+    ) {
       hasStationIcon = true;
     }
     if (
@@ -39,27 +42,45 @@ commonRouter.get('/stations', async (req, res) => {
     if (
       station.odptOperator === 'odpt.Operator:Tobu' &&
       (stationCode.match(/^TD-(0[1-9]|[1-2][0-9]|3[0-5])$/) ||
-        stationCode.match(/^TI-(0[1-9]|[1-4][0-9]|5[0-7])$/) ||
-        stationCode.match(/^TJ-(0[1-9]|[1-3][0-9]|4[0-7])$/) ||
-        stationCode.match(/^TN-(0[1-9]|[1-4][0-9]|5[0-8])$/) ||
-        stationCode.match(/^TS-(0[1-9]|[1-4][0-9]|5[0-1])$/))
+        stationCode.match(/^TI-(0[1-9]|1[0-9]|2[0-5]|3[1-9]|4[1-7]|5[1-7])$/) ||
+        stationCode.match(/^TJ-(0[1-9]|[1-2][0-9]|3[0-8]|4[1-7])$/) ||
+        stationCode.match(/^TN-(0[1-9]|1[0-9]|2[0-5]|5[1-8]|3[1-9]|40)$/) ||
+        stationCode.match(/^TS-(0[1-9]|[1-2][0-9]|30|51|4[1-4])$/))
     ) {
       hasStationIcon = true;
     }
     if (
       station.odptOperator === 'odpt.Operator:Toei' &&
-      (stationCode.match(/^NT(0[1-9]|1[0-3])]$/) ||
-        stationCode.match(/^SA(0[1-9]|[1-2][0-9]|30)$/))
+      (stationCode.match(/^NT-(0[1-9]|1[0-3])$/) ||
+        stationCode.match(/^SA-(0[1-9]|[1-2][0-9]|30)$/))
     ) {
       hasStationIcon = true;
     }
-    if (station.odptOperator === 'odpt.Operator:TokyoMetro') {
+    if (
+      station.odptOperator === 'odpt.Operator:TokyoMetro' &&
+      (stationCode.match(/^C(0[1-9]|1[0-9]|20)$/) ||
+        stationCode.match(/^F(0[1-9]|1[0-6])$/) ||
+        stationCode.match(/^G(0[1-9]|1[0-9])$/) ||
+        stationCode.match(/^H(0[1-9]|1[0-9]|20|21)$/) ||
+        stationCode.match(/^M(0[1-9]|1[0-9]|2[0-5])$/) ||
+        stationCode.match(/^Mb0[3-5]$/) ||
+        stationCode.match(/^N(0[1-9]|1[0-9])$/) ||
+        stationCode.match(/^T(0[1-9]|1[0-9]|2[0-3])$/) ||
+        stationCode.match(/^Y(0[1-9]|1[0-9]|2[0-4])$/) ||
+        stationCode.match(/^Z(0[1-9]|1[0-4])/))
+    ) {
       hasStationIcon = true;
     }
-    if (station.odptOperator === 'odpt.Operator:TWR') {
+    if (
+      station.odptOperator === 'odpt.Operator:TWR' &&
+      stationCode.match(/^R[1-8]$/)
+    ) {
       hasStationIcon = true;
     }
-    if (station.odptOperator === 'odpt.Operator:Yurikamome') {
+    if (
+      station.odptOperator === 'odpt.Operator:Yurikamome' &&
+      stationCode.match(/^U([1-9]|1[0-6])$/)
+    ) {
       hasStationIcon = true;
     }
     if (
@@ -83,7 +104,7 @@ commonRouter.get('/stations', async (req, res) => {
       stationCode.match(/^JM([1-2][0-9]|3[0-5])$/) ||
       stationCode.match(/^JS(0[6-9]|1[0-9]|2[0-4])$/)
     ) {
-      hasStationIcon = true;
+      hasStationIcon = false;
     }
 
     if (railway && operator) {
@@ -102,9 +123,19 @@ commonRouter.get('/stations', async (req, res) => {
   res.send(sortBy(response, ['hasStationIcon', 'stationCode']));
 });
 
+interface RailwayItem {
+  id: string;
+  title?: MultiLangObject;
+  kana?: string;
+  operator: string;
+  operatorTitle?: MultiLangObject;
+  lineCode?: string;
+  color?: string;
+}
+
 commonRouter.get('/railways', async (req, res) => {
   const railways = await Railway.findAll();
-  const response: any[] = [];
+  const response: RailwayItem[] = [];
   for (const railway of railways) {
     const operator = await Operator.findByPk(railway.odptOperator);
     if (operator) {
@@ -112,6 +143,7 @@ commonRouter.get('/railways', async (req, res) => {
         id: railway.owlSameAs,
         title: railway.odptRailwayTitle || undefined,
         kana: railway.odptKana || undefined,
+        operator: railway.odptOperator,
         operatorTitle: operator.odptOperatorTitle || undefined,
         lineCode: railway.odptLineCode || undefined,
         color: railway.odptColor || undefined,
