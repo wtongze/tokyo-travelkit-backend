@@ -1,5 +1,9 @@
 import express from 'express';
+import { uniq } from 'lodash';
 import { Station } from '../models/station';
+import { TrainTimetable } from '../models/trainTimetable';
+import { NativeGraph, getCachePath } from '../native/nativeGraph';
+import { getTrainTimetable } from './train';
 
 const directionRouter = express.Router();
 
@@ -15,57 +19,173 @@ function getType(arg: string) {
   return NodeType.TRAIN_TIMETABLE;
 }
 
+const weekdayGraph = new NativeGraph(
+  getCachePath('weekdayTimeDict.json'),
+  getCachePath('weekdayGraph.txt'),
+  getCachePath('weekdayTimetableStationMap.txt'),
+  getCachePath('weekdayHeuristicMap.txt')
+);
+
 directionRouter.get('/all/:from/:to', async (req, res) => {
   const from = await Station.findByPk(req.params.from);
+  const { fromTime, toTime } = req.query;
   const to = await Station.findByPk(req.params.to);
-  if (from && to) {
-    const rawDirection = [
-      '14:02@odpt.Station:Toei.Shinjuku.Iwamotocho',
-      '14:11@odpt.Station:JR-East.ChuoSobuLocal.Akihabara',
-      '14:11@odpt.TrainTimetable:JR-East.ChuoSobuLocal.1322B.Weekday',
-      '14:13@odpt.TrainTimetable:JR-East.ChuoSobuLocal.1322B.Weekday',
-      '14:15@odpt.TrainTimetable:JR-East.ChuoSobuLocal.1322B.Weekday',
-      '14:18@odpt.TrainTimetable:JR-East.ChuoSobuLocal.1322B.Weekday',
-      '14:18@odpt.Station:JR-East.ChuoSobuLocal.Kinshicho',
-      '14:23@odpt.Station:JR-East.SobuRapid.Kinshicho',
-      '14:24@odpt.Station:JR-East.SobuRapid.Kinshicho',
-      '14:24@odpt.TrainTimetable:JR-East.SobuRapid.1229F.Weekday',
-      '14:29@odpt.TrainTimetable:JR-East.SobuRapid.1229F.Weekday',
-      '14:34@odpt.TrainTimetable:JR-East.SobuRapid.1229F.Weekday',
-      '14:40@odpt.TrainTimetable:JR-East.SobuRapid.1229F.Weekday',
-      '14:44@odpt.TrainTimetable:JR-East.SobuRapid.1229F.Weekday',
-      '14:51@odpt.TrainTimetable:JR-East.SobuRapid.1229F.Weekday',
-      '14:55@odpt.TrainTimetable:JR-East.SobuRapid.1229F.Weekday',
-      '15:01@odpt.TrainTimetable:JR-East.Sobu.4229F.Weekday',
-      '15:05@odpt.TrainTimetable:JR-East.Sobu.4229F.Weekday',
-      '15:08@odpt.TrainTimetable:JR-East.Sobu.4229F.Weekday',
-      '15:09@odpt.TrainTimetable:JR-East.Sobu.4229F.Weekday',
-      '15:13@odpt.TrainTimetable:JR-East.Sobu.4229F.Weekday',
-      '15:17@odpt.TrainTimetable:JR-East.Sobu.4229F.Weekday',
-      '15:17@odpt.TrainTimetable:JR-East.Narita.4229F.Weekday',
-      '15:23@odpt.TrainTimetable:JR-East.Narita.4229F.Weekday',
-      '15:24@odpt.TrainTimetable:JR-East.Narita.4229F.Weekday',
-      '15:30@odpt.TrainTimetable:JR-East.Narita.4229F.Weekday',
-      '15:32@odpt.TrainTimetable:JR-East.NaritaAirportBranch.4229F.Weekday',
-      '15:41@odpt.TrainTimetable:JR-East.NaritaAirportBranch.4229F.Weekday',
-      '15:41@odpt.Station:JR-East.NaritaAirportBranch.NaritaAirportTerminal2and3',
-      'END@odpt.Station:JR-East.NaritaAirportBranch.NaritaAirportTerminal2and3',
-    ];
-    rawDirection.unshift('14:00@odpt.Station:Toei.Shinjuku.Iwamotocho');
-    let currType = getType(rawDirection[0]);
-    let typeCount = 0;
-    const result: string[][] = [];
-    for (let i = 0; i < rawDirection.length; i += 1) {
-      if (getType(rawDirection[i]) !== currType) {
-        currType = getType(rawDirection[i]);
-        typeCount += 1;
+
+  if (from && to && (fromTime || toTime)) {
+    if (typeof fromTime === 'string' || typeof toTime === 'string') {
+      let routing: any;
+      if (typeof fromTime === 'string') {
+        routing = weekdayGraph.searchByFromTime(
+          fromTime,
+          from.owlSameAs,
+          to.owlSameAs
+        );
+        routing.path.unshift(`${fromTime}@${from.owlSameAs}`);
+        routing.ref.unshift(from.owlSameAs);
+      } else if (typeof toTime === 'string') {
+        routing = weekdayGraph.searchByToTime(
+          toTime,
+          from.owlSameAs,
+          to.owlSameAs
+        );
+        routing.path.push(`${toTime}@${to.owlSameAs}`);
+        routing.ref.push(to.owlSameAs);
       }
-      if (!Array.isArray(result[typeCount])) {
-        result[typeCount] = [];
+      if (routing && routing.cost > 0) {
+        const rawPath = [...routing.path];
+        const rawRef = [...routing.ref];
+
+        let currType = getType(rawPath[0]);
+        let typeCount = 0;
+        const result: string[][] = [];
+        const refResult: string[][] = [];
+        for (let i = 0; i < rawPath.length; i += 1) {
+          if (getType(rawPath[i]) !== currType) {
+            currType = getType(rawPath[i]);
+            typeCount += 1;
+          }
+          if (!Array.isArray(result[typeCount])) {
+            result[typeCount] = [];
+            refResult[typeCount] = [];
+          }
+          result[typeCount].push(rawPath[i]);
+          refResult[typeCount].push(rawRef[i]);
+        }
+
+        const rawDirections: string[][] = [];
+        result.forEach((item) => {
+          rawDirections.push(
+            uniq([
+              item[0].startsWith('START@') ? item[1] : item[0],
+              item[item.length - 1].startsWith('END@')
+                ? item[item.length - 2]
+                : item[item.length - 1],
+            ])
+          );
+        });
+
+        const directions: any[] = [];
+
+        for (const [index, item] of rawDirections.entries()) {
+          // console.log(item, refResult[index]);
+          if (index === 0 && item.length >= 2) {
+            // console.log(item, from.owlSameAs, fromTime);
+            const currStart = item.find((i) => !i.startsWith('START@'));
+            // console.log(item, currStart);
+            if (currStart) {
+              const [currFromTime, currFrom] = currStart.split('@');
+              directions.push({
+                type: 'START_TRANSFER',
+                fromTime: typeof toTime === 'string' ? currFromTime : fromTime,
+                from: typeof toTime === 'string' ? from.owlSameAs : currFrom,
+              });
+            }
+          } else if (index === rawDirections.length - 1 && item.length >= 2) {
+            const currEnd = item.reverse().find((i) => !i.startsWith('END@'));
+            if (currEnd) {
+              const [currToTime, currTo] = currEnd.split('@');
+              directions.push({
+                type: 'END_TRANSFER',
+                toTime: typeof fromTime === 'string' ? currToTime : toTime,
+                to: typeof fromTime === 'string' ? to.owlSameAs : currTo,
+              });
+            }
+          } else if (
+            item.every((i) => i.indexOf('odpt.Station') > 0) &&
+            index !== rawDirections.length - 1 &&
+            index !== 0
+          ) {
+            directions.push({
+              type: 'TRANSFER',
+            });
+          } else if (item.every((i) => i.indexOf('odpt.TrainTimetable') > 0)) {
+            const currFrom = refResult[index][0];
+            const currTo = refResult[index][refResult[index].length - 1];
+            const trainTimetable = await TrainTimetable.findByPk(
+              item[0].slice(6)
+            );
+            const viaRailways = uniq(
+              refResult[index].map(
+                (i) =>
+                  `odpt.Railway:${i
+                    .split(':')[1]
+                    .split('.')
+                    .slice(0, 2)
+                    .join('.')}`
+              )
+            );
+            directions.push({
+              type: 'TRAIN',
+              fromTime: item[0].slice(0, 5),
+              from: currFrom,
+              toTime: item[1].slice(0, 5),
+              to: currTo,
+              trainTimetable: trainTimetable
+                ? await getTrainTimetable(trainTimetable)
+                : {},
+
+              via: viaRailways.map((r) => {
+                const stops = uniq(
+                  refResult[index].filter(
+                    (i) =>
+                      i.indexOf(`${r.split(':')[1]}.`) > 0 &&
+                      i !== currFrom &&
+                      i !== currTo
+                  )
+                );
+                return {
+                  railwayId: r,
+                  stops,
+                };
+              }),
+            });
+          }
+        }
+        // console.log(routing);
+        const calcFromTime =
+          typeof fromTime === 'string'
+            ? fromTime
+            : routing.path
+                .find((i: string) => !i.startsWith('START@'))
+                .split('@')[0];
+        const calcToTime =
+          typeof toTime === 'string'
+            ? toTime
+            : routing.path
+                .reverse()
+                .find((i: string) => !i.startsWith('END@'))
+                .split('@')[0];
+        res.send({
+          from: from.owlSameAs,
+          fromTime: calcFromTime,
+          to: to.owlSameAs,
+          toTime: calcToTime,
+          directions,
+        });
+      } else {
+        res.sendStatus(404);
       }
-      result[typeCount].push(rawDirection[i]);
     }
-    res.send(result);
   } else {
     res.sendStatus(404);
   }

@@ -24,43 +24,48 @@ interface TrainTimetableItem {
   viaRailway?: string[];
 }
 
+export async function getTrainTimetable(
+  trainTimetable: TrainTimetable
+): Promise<TrainTimetableItem> {
+  const operator = await Operator.findByPk(trainTimetable.odptOperator);
+  const railway = await Railway.findByPk(trainTimetable.odptRailway);
+  const railDirection = await RailDirection.findByPk(
+    trainTimetable.odptRailDirection || ''
+  );
+  const trainOwner = await Operator.findByPk(
+    trainTimetable.odptTrainOwner || ''
+  );
+  const trainType = await TrainType.findByPk(
+    trainTimetable.odptTrainType || ''
+  );
+
+  const response: TrainTimetableItem = {
+    id: trainTimetable.owlSameAs,
+    operatorTitle: operator?.odptOperatorTitle || undefined,
+    railway: trainTimetable.odptRailway,
+    railwayTitle: railway?.odptRailwayTitle || undefined,
+    railDirectionTitle: railDirection?.odptRailDirectionTitle || undefined,
+    trainNumber: trainTimetable.odptTrainNumber,
+    trainTypeTitle: trainType?.odptTrainTypeTitle || undefined,
+    trainName:
+      trainTimetable.odptTrainName && trainTimetable.odptTrainName.length > 0
+        ? trainTimetable.odptTrainName
+        : undefined,
+    trainOwnerTitle: trainOwner?.odptOperatorTitle || undefined,
+    originStation: trainTimetable.odptOriginStation || undefined,
+    destinationStation: trainTimetable.odptDestinationStation || undefined,
+    viaStation: trainTimetable.odptViaStation || undefined,
+    viaRailway: trainTimetable.odptViaRailway || undefined,
+  };
+  return response;
+}
+
 // partial implementation
 trainRouter.get('/timetable/:id', async (req, res) => {
   const { id } = req.params;
   const trainTimetable = await TrainTimetable.findByPk(id);
   if (trainTimetable) {
-    const operator = await Operator.findByPk(trainTimetable.odptOperator);
-    const railway = await Railway.findByPk(trainTimetable.odptRailway);
-    const railDirection = await RailDirection.findByPk(
-      trainTimetable.odptRailDirection || ''
-    );
-    const trainOwner = await Operator.findByPk(
-      trainTimetable.odptTrainOwner || ''
-    );
-    const trainType = await TrainType.findByPk(
-      trainTimetable.odptTrainType || ''
-    );
-
-    const response: TrainTimetableItem = {
-      id: trainTimetable.owlSameAs,
-      operatorTitle: operator?.odptOperatorTitle || undefined,
-      railway: trainTimetable.odptRailway,
-      railwayTitle: railway?.odptRailwayTitle || undefined,
-      railDirectionTitle: railDirection?.odptRailDirectionTitle || undefined,
-      trainNumber: trainTimetable.odptTrainNumber,
-      trainTypeTitle: trainType?.odptTrainTypeTitle || undefined,
-      trainName:
-        trainTimetable.odptTrainName && trainTimetable.odptTrainName.length > 0
-          ? trainTimetable.odptTrainName
-          : undefined,
-      trainOwnerTitle: trainOwner?.odptOperatorTitle || undefined,
-      originStation: trainTimetable.odptOriginStation || undefined,
-      destinationStation: trainTimetable.odptDestinationStation || undefined,
-      viaStation: trainTimetable.odptViaStation || undefined,
-      viaRailway: trainTimetable.odptViaRailway || undefined,
-    };
-
-    res.send(response);
+    res.send(getTrainTimetable(trainTimetable));
   } else {
     res.sendStatus(404);
   }

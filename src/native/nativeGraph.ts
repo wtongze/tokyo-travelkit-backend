@@ -5,16 +5,16 @@ import fs from 'fs';
 const addon = require('./addon.node');
 
 const START_HOUR = 4;
-const getCachePath = (name: string) =>
+export const getCachePath = (name: string) =>
   path.resolve(__dirname, `../../cache/${name}`);
 
-const getTimeScore = (t: string) => {
+export const getTimeScore = (t: string) => {
   const hour = parseInt(t.slice(0, 2), 10);
   const min = parseInt(t.slice(3, 5), 10);
   return hour * 60 + min + (hour < START_HOUR ? 24 * 60 : 0);
 };
 
-class NativeGraph {
+export class NativeGraph {
   private nativeInstance;
 
   private timeDict;
@@ -56,6 +56,7 @@ class NativeGraph {
   searchByFromTime(fromTime: string, from: string, to: string): string[] {
     const times: string[] = this.timeDict[from];
     const start = times.find((i) => getTimeScore(i) >= getTimeScore(fromTime));
+    // console.log(fromTime, start);
     return this.findPath(`${start}@${from}`, `END@${to}`);
   }
 
@@ -70,33 +71,34 @@ class NativeGraph {
       }
       return true;
     });
+    if (getTimeScore(toTime) < getTimeScore(end!)) {
+      return this.findPath(`START@${from}`, `${times[times.length - 1]}@${to}`);
+    }
     return this.findPath(`START@${from}`, `${end}@${to}`);
   }
 }
 
-const now = performance.now();
-const a = new NativeGraph(
-  getCachePath('weekdayTimeDict.json'),
-  getCachePath('weekdayGraph.txt'),
-  getCachePath('weekdayTimetableStationMap.txt'),
-  getCachePath('weekdayHeuristicMap.txt')
-);
-const finish = performance.now();
+// const now = performance.now();
+// const a = new NativeGraph(
+//   getCachePath('weekdayTimeDict.json'),
+//   getCachePath('weekdayGraph.txt'),
+//   getCachePath('weekdayTimetableStationMap.txt'),
+//   getCachePath('weekdayHeuristicMap.txt')
+// );
+// const finish = performance.now();
 
-const now2 = performance.now();
+// const now2 = performance.now();
 // const result = a.searchByFromTime(
 //   '07:25',
 //   'odpt.Station:JR-East.NaritaAirportBranch.NaritaAirportTerminal2and3',
 //   'odpt.Station:JR-East.Keiyo.Maihama'
 // );
-const result = a.searchByFromTime(
-  '14:20',
-  'odpt.Station:Toei.Shinjuku.Iwamotocho',
-  'odpt.Station:JR-East.NaritaAirportBranch.NaritaAirportTerminal2and3'
-);
-const finish2 = performance.now();
-console.log(result);
-console.log('Import:', (finish - now).toFixed(2), 'ms');
-console.log('Calc:', (finish2 - now2).toFixed(2), 'ms');
-
-export default NativeGraph;
+// const result = a.searchByFromTime(
+//   '14:00',
+//   'odpt.Station:Toei.Shinjuku.Iwamotocho',
+//   'odpt.Station:JR-East.NaritaAirportBranch.NaritaAirportTerminal2and3'
+// );
+// const finish2 = performance.now();
+// console.log(result);
+// console.log('Import:', (finish - now).toFixed(2), 'ms');
+// console.log('Calc:', (finish2 - now2).toFixed(2), 'ms');
