@@ -35,8 +35,22 @@ class NativeGraph {
     );
   }
 
-  findPath(from: string, to: string): string[] {
-    return this.nativeInstance.findPath(from, to);
+  findPath(
+    from: string,
+    to: string,
+    preference: { [operator: string]: boolean } = {}
+  ): string[] {
+    return this.nativeInstance.findPath(from, to, {
+      Sotetsu: true,
+      YokohamaMunicipal: true,
+      TamaMonorail: true,
+      MIR: true,
+      TWR: true,
+      'JR-East': true,
+      TokyoMetro: true,
+      Toei: true,
+      ...preference,
+    });
   }
 
   searchByFromTime(fromTime: string, from: string, to: string): string[] {
@@ -76,7 +90,7 @@ const now2 = performance.now();
 //   'odpt.Station:JR-East.Keiyo.Maihama'
 // );
 const result = a.searchByFromTime(
-  '14:00',
+  '14:20',
   'odpt.Station:Toei.Shinjuku.Iwamotocho',
   'odpt.Station:JR-East.NaritaAirportBranch.NaritaAirportTerminal2and3'
 );

@@ -114,13 +114,14 @@ int getTimeScore(std::string time) {
 
 Napi::Value NativeGraph::findPath(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
-  if (info.Length() != 2) {
+  if (info.Length() != 3) {
     Napi::TypeError::New(env, "Wrong number of arguments")
         .ThrowAsJavaScriptException();
   }
 
   std::string from = info[0].As<Napi::String>().Utf8Value();
   std::string to = info[1].As<Napi::String>().Utf8Value();
+  Napi::Object useOperator = info[2].As<Napi::Object>();
 
   std::string fromKey = from.substr(6);
   std::string toKey = to.starts_with("END@") ? to.substr(4) : to.substr(6);
@@ -130,9 +131,6 @@ Napi::Value NativeGraph::findPath(const Napi::CallbackInfo& info) {
       this->_heuristicMap[fromKey].contains(toKey)) {
     USE_HEURISTIC = true;
   }
-
-  std::cout << "USE_HEURISTIC: " << std::boolalpha << USE_HEURISTIC
-            << std::endl;
 
   std::map<std::string, std::string> parentMap;
   std::map<std::string, int> costMap;
@@ -177,22 +175,25 @@ Napi::Value NativeGraph::findPath(const Napi::CallbackInfo& info) {
               this->_heuristicMap[heuristicKey].contains(toKey)) {
             heuristic = this->_heuristicMap[heuristicKey][toKey] / 800;
             if (item.getName().starts_with("START@")) {
-              // std::cout << "start: " << neighborKey << " " << to.substr(0, 5)
-              //           << " " << heuristic << std::endl;
               int fromTimeScore = getTimeScore(neighborKey.substr(0, 5));
               int targetTimeScore = getTimeScore(to.substr(0, 5)) - heuristic;
               heuristic += std::abs(fromTimeScore - targetTimeScore);
             }
-            // Avoid operator
-            // if (heuristicKey.find("JR-East") == std::string::npos) {
-            //   heuristic *= 4;
-            // }
-          } else {
-            // std::cout << "Heuristic not found: " << heuristicKey <<
-            // std::endl;
           }
         }
-        pq.push(Node(neighborKey, alt, heuristic));
+
+        if (neighborKey.starts_with("START@") ||
+            neighborKey.starts_with("END@")) {
+          pq.push(Node(neighborKey, alt, heuristic));
+        } else {
+          size_t sep = neighborKey.find(":", neighborKey.find("@") + 1);
+          std::string currOperator = neighborKey.substr(
+              sep + 1, neighborKey.find(".", sep + 1) - sep - 1);
+
+          if (useOperator.Get(currOperator).ToBoolean()) {
+            pq.push(Node(neighborKey, alt, heuristic));
+          }
+        }
       }
     }
   }
@@ -209,13 +210,35 @@ Napi::Value NativeGraph::findPath(const Napi::CallbackInfo& info) {
     std::cout << "Found: " << tempPath.size() << " " << totalCost << std::endl;
 
     Napi::Array path = Napi::Array::New(env, tempPath.size());
+    Napi::Array ref = Napi::Array::New(env, tempPath.size());
 
     for (unsigned long i = 0; i < tempPath.size(); i++) {
-      path.Set(i, Napi::String::New(env, tempPath[tempPath.size() - 1 - i]));
+      std::string node = tempPath[tempPath.size() - 1 - i];
+
+      std::string refKey;
+      if (node.starts_with("END@")) {
+        refKey = node.substr(4);
+      } else if (node.find("odpt.TrainTimetable") != std::string::npos) {
+        refKey = this->_timetableStationMap[node];
+      } else {
+        refKey = node.substr(6);
+      }
+
+      path.Set(i, Napi::String::New(env, node));
+      ref.Set(i, Napi::String::New(env, refKey));
     }
-    return path;
+
+    Napi::Object result = Napi::Object::New(env);
+    result.Set("path", path);
+    result.Set("ref", ref);
+    result.Set("cost", Napi::Number::New(env, totalCost));
+    return result;
   } else {
-    return Napi::Array::New(env);
+    Napi::Object result = Napi::Object::New(env);
+    result.Set("path", Napi::Array::New(env));
+    result.Set("ref", Napi::Array::New(env));
+    result.Set("cost", Napi::Number::New(env, -1));
+    return result;
   }
 }
 
