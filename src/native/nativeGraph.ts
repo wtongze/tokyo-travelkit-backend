@@ -53,14 +53,26 @@ export class NativeGraph {
     });
   }
 
-  searchByFromTime(fromTime: string, from: string, to: string): string[] {
+  searchByFromTime(
+    fromTime: string,
+    from: string,
+    to: string,
+    pref: { [operator: string]: boolean }
+  ): string[] {
     const times: string[] = this.timeDict[from];
     const start = times.find((i) => getTimeScore(i) >= getTimeScore(fromTime));
-    // console.log(fromTime, start);
-    return this.findPath(`${start}@${from}`, `END@${to}`);
+    if (start === undefined) {
+      return this.findPath(`${times[0]}@${from}`, `END@${to}`, pref);
+    }
+    return this.findPath(`${start}@${from}`, `END@${to}`, pref);
   }
 
-  searchByToTime(toTime: string, from: string, to: string): string[] {
+  searchByToTime(
+    toTime: string,
+    from: string,
+    to: string,
+    pref: { [operator: string]: boolean }
+  ): string[] {
     const times: string[] = this.timeDict[to];
     const end = times.find((i, index) => {
       if (index < times.length - 1) {
@@ -72,9 +84,13 @@ export class NativeGraph {
       return true;
     });
     if (getTimeScore(toTime) < getTimeScore(end!)) {
-      return this.findPath(`START@${from}`, `${times[times.length - 1]}@${to}`);
+      return this.findPath(
+        `START@${from}`,
+        `${times[times.length - 1]}@${to}`,
+        pref
+      );
     }
-    return this.findPath(`START@${from}`, `${end}@${to}`);
+    return this.findPath(`START@${from}`, `${end}@${to}`, pref);
   }
 }
 

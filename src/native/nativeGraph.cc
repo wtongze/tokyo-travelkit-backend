@@ -144,7 +144,6 @@ Napi::Value NativeGraph::findPath(const Napi::CallbackInfo& info) {
   int counter = 0;
   while (!pq.empty()) {
     counter++;
-    // std::cout << counter << std::endl;
 
     // break if routing question is too hard.
     if (counter > 1000000) {
@@ -217,7 +216,6 @@ Napi::Value NativeGraph::findPath(const Napi::CallbackInfo& info) {
       tempPath.push_back(parentMap[key]);
       key = parentMap[key];
     }
-    // std::cout << "Found: " << tempPath.size() << " " << totalCost << std::endl;
 
     Napi::Array path = Napi::Array::New(env, tempPath.size());
     Napi::Array ref = Napi::Array::New(env, tempPath.size());
@@ -242,12 +240,14 @@ Napi::Value NativeGraph::findPath(const Napi::CallbackInfo& info) {
     result.Set("path", path);
     result.Set("ref", ref);
     result.Set("cost", Napi::Number::New(env, totalCost));
+    result.Set("difficulty", Napi::Number::New(env, counter));
     return result;
   } else {
     Napi::Object result = Napi::Object::New(env);
     result.Set("path", Napi::Array::New(env));
     result.Set("ref", Napi::Array::New(env));
     result.Set("cost", Napi::Number::New(env, -1));
+    result.Set("difficulty", Napi::Number::New(env, counter));
     return result;
   }
 }

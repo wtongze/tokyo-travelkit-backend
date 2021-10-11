@@ -2,7 +2,7 @@ import express from 'express';
 import { uniq } from 'lodash';
 import { Station } from '../models/station';
 import { TrainTimetable } from '../models/trainTimetable';
-import { NativeGraph, getCachePath } from '../native/nativeGraph';
+import { NativeGraph, getCachePath, getTimeScore } from '../native/nativeGraph';
 import { getTrainTimetable } from './train';
 
 const directionRouter = express.Router();
@@ -31,14 +31,27 @@ directionRouter.get('/all/:from/:to', async (req, res) => {
   const { fromTime, toTime } = req.query;
   const to = await Station.findByPk(req.params.to);
 
-  if (from && to && (fromTime || toTime)) {
+  const operatorPref: { [operator: string]: boolean } = {
+    Sotetsu: req.query.Sotetsu === 'true',
+    YokohamaMunicipal: req.query.YokohamaMunicipal === 'true',
+    TamaMonorail: req.query.TamaMonorail === 'true',
+    MIR: req.query.MIR === 'true',
+    TWR: req.query.TWR === 'true',
+    'JR-East': req.query['JR-East'] === 'true',
+    TokyoMetro: req.query.TokyoMetro === 'true',
+    Toei: req.query.Toei === 'true',
+  };
+
+  if (from && to && (fromTime || toTime) && operatorPref) {
     if (typeof fromTime === 'string' || typeof toTime === 'string') {
       let routing: any;
+      const startTime = performance.now();
       if (typeof fromTime === 'string') {
         routing = weekdayGraph.searchByFromTime(
           fromTime,
           from.owlSameAs,
-          to.owlSameAs
+          to.owlSameAs,
+          operatorPref
         );
         routing.path.unshift(`${fromTime}@${from.owlSameAs}`);
         routing.ref.unshift(from.owlSameAs);
@@ -46,11 +59,13 @@ directionRouter.get('/all/:from/:to', async (req, res) => {
         routing = weekdayGraph.searchByToTime(
           toTime,
           from.owlSameAs,
-          to.owlSameAs
+          to.owlSameAs,
+          operatorPref
         );
         routing.path.push(`${toTime}@${to.owlSameAs}`);
         routing.ref.push(to.owlSameAs);
       }
+      const endTime = performance.now();
       if (routing && routing.cost > 0) {
         const rawPath = [...routing.path];
         const rawRef = [...routing.ref];
@@ -180,6 +195,12 @@ directionRouter.get('/all/:from/:to', async (req, res) => {
           fromTime: calcFromTime,
           to: to.owlSameAs,
           toTime: calcToTime,
+          time:
+            getTimeScore(calcToTime) < getTimeScore(calcFromTime)
+              ? getTimeScore(calcToTime) + 24 * 60 - getTimeScore(calcFromTime)
+              : getTimeScore(calcToTime) - getTimeScore(calcFromTime),
+          searchTime: parseFloat((endTime - startTime).toFixed(2)),
+          difficulty: routing.difficulty,
           directions,
         });
       } else {
