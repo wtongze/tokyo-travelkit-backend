@@ -26,10 +26,18 @@ const weekdayGraph = new NativeGraph(
   getCachePath('weekdayHeuristicMap.txt')
 );
 
+const saturdayHolidayGraph = new NativeGraph(
+  getCachePath('saturdayHolidayTimeDict.json'),
+  getCachePath('saturdayHolidayGraph.txt'),
+  getCachePath('saturdayHolidayTimetableStationMap.txt'),
+  getCachePath('saturdayHolidayHeuristicMap.txt')
+);
+
 directionRouter.get('/all/:from/:to', async (req, res) => {
   const from = await Station.findByPk(req.params.from);
   const { fromTime, toTime } = req.query;
   const to = await Station.findByPk(req.params.to);
+  const { calendar } = req.query;
 
   const operatorPref: { [operator: string]: boolean } = {
     Sotetsu: req.query.Sotetsu === 'true',
@@ -42,26 +50,46 @@ directionRouter.get('/all/:from/:to', async (req, res) => {
     Toei: req.query.Toei === 'true',
   };
 
-  if (from && to && (fromTime || toTime) && operatorPref) {
+  if (from && to && (fromTime || toTime) && operatorPref && calendar) {
     if (typeof fromTime === 'string' || typeof toTime === 'string') {
       let routing: any;
       const startTime = performance.now();
       if (typeof fromTime === 'string') {
-        routing = weekdayGraph.searchByFromTime(
-          fromTime,
-          from.owlSameAs,
-          to.owlSameAs,
-          operatorPref
-        );
+        if (calendar === 'weekday') {
+          routing = weekdayGraph.searchByFromTime(
+            fromTime,
+            from.owlSameAs,
+            to.owlSameAs,
+            operatorPref
+          );
+        } else {
+          routing = saturdayHolidayGraph.searchByFromTime(
+            fromTime,
+            from.owlSameAs,
+            to.owlSameAs,
+            operatorPref
+          );
+        }
+
         routing.path.unshift(`${fromTime}@${from.owlSameAs}`);
         routing.ref.unshift(from.owlSameAs);
       } else if (typeof toTime === 'string') {
-        routing = weekdayGraph.searchByToTime(
-          toTime,
-          from.owlSameAs,
-          to.owlSameAs,
-          operatorPref
-        );
+        if (calendar === 'weekday') {
+          routing = weekdayGraph.searchByToTime(
+            toTime,
+            from.owlSameAs,
+            to.owlSameAs,
+            operatorPref
+          );
+        } else {
+          routing = saturdayHolidayGraph.searchByToTime(
+            toTime,
+            from.owlSameAs,
+            to.owlSameAs,
+            operatorPref
+          );
+        }
+
         routing.path.push(`${toTime}@${to.owlSameAs}`);
         routing.ref.push(to.owlSameAs);
       }

@@ -8,7 +8,8 @@
     "prepare": "husky install",
     "build": "bash build.sh",
     "import": "tsc && node build/import.js",
-    "api": "npm run build && node build/index.js"
+    "api": "npm run build && node build/index.js",
+    "buildGraph": "rm -rf cache/ && mkdir cache/ && tsc && node build/buildGraph.js"
   },
   "repository": {
     "type": "git",
