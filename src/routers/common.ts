@@ -9,6 +9,7 @@ const commonRouter = express.Router();
 
 interface StationItem {
   id: string;
+  dcDate: string;
   stationCode?: string;
   title?: MultiLangObject;
   railway: string;
@@ -110,6 +111,7 @@ commonRouter.get('/stations', async (req, res) => {
     if (railway && operator) {
       response.push({
         id: station.owlSameAs,
+        dcDate: station.dcDate,
         stationCode: station.odptStationCode || undefined,
         title: station.odptStationTitle || undefined,
         railway: railway.owlSameAs,
@@ -125,12 +127,14 @@ commonRouter.get('/stations', async (req, res) => {
 
 interface RailwayItem {
   id: string;
+  dcDate: string;
   title?: MultiLangObject;
   kana?: string;
   operator: string;
   operatorTitle?: MultiLangObject;
   lineCode?: string;
   color?: string;
+  hasStationOrder?: boolean;
 }
 
 commonRouter.get('/railways', async (req, res) => {
@@ -141,12 +145,14 @@ commonRouter.get('/railways', async (req, res) => {
     if (operator) {
       response.push({
         id: railway.owlSameAs,
+        dcDate: railway.dcDate,
         title: railway.odptRailwayTitle || undefined,
         kana: railway.odptKana || undefined,
         operator: railway.odptOperator,
         operatorTitle: operator.odptOperatorTitle || undefined,
         lineCode: railway.odptLineCode || undefined,
         color: railway.odptColor || undefined,
+        hasStationOrder: railway.odptStationOrder.length > 0 ? true : undefined,
       });
     }
   }

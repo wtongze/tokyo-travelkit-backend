@@ -63,6 +63,7 @@ railwayRouter.get('/info/:id', async (req, res) => {
 
 interface RailwayFareInfo {
   id: string;
+  dcDate: string;
   operatorTitle?: MultiLangObject;
   fromStationTitle?: MultiLangObject;
   toStationTitle?: MultiLangObject;
@@ -123,6 +124,7 @@ railwayRouter.get('/fare/:from/:to', async (req, res) => {
       }
       response.push({
         id: railwayFare.owlSameAs,
+        dcDate: railwayFare.dcDate,
         operatorTitle: operator
           ? operator.odptOperatorTitle || undefined
           : undefined,
