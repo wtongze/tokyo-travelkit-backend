@@ -1,10 +1,10 @@
 #pragma once
 
 #include <napi.h>
-#include <map>
+#include <unordered_map>
 
-using Object3D = std::map<std::string, std::map<std::string, int>>;
-using Object2D = std::map<std::string, std::string>;
+using Object3D = std::unordered_map<std::string, std::unordered_map<std::string, int>>;
+using Object2D = std::unordered_map<std::string, std::string>;
 
 class NativeGraph : public Napi::ObjectWrap<NativeGraph> {
  public:
