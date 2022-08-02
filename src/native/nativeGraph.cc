@@ -5,11 +5,11 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <queue>
 
-using Object3D = std::map<std::string, std::map<std::string, int>>;
-using Object2D = std::map<std::string, std::string>;
+using Object3D = std::unordered_map<std::string, std::unordered_map<std::string, int>>;
+using Object2D = std::unordered_map<std::string, std::string>;
 
 void importObject(Napi::Object& obj, Object3D* targetMap) {
   Napi::Array parentKeys = obj.GetPropertyNames();
@@ -132,8 +132,8 @@ Napi::Value NativeGraph::findPath(const Napi::CallbackInfo& info) {
     USE_HEURISTIC = true;
   }
 
-  std::map<std::string, std::string> parentMap;
-  std::map<std::string, int> costMap;
+  std::unordered_map<std::string, std::string> parentMap;
+  std::unordered_map<std::string, int> costMap;
   std::priority_queue<Node, std::vector<Node>, NodeComparator> pq;
 
   parentMap[from] = "<END>";
