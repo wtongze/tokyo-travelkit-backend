@@ -11,6 +11,9 @@ Frontend Codebase:
 
 <https://github.com/wtongze/tokyo-travelkit-frontend>
 
+## Note 
+> The code submitted to the organizer of 4th Open Data Challenge for Public Transportation in Tokyo is in the `Release` section.
+
 
 ## Set up
 Please make sure you have Python and C++ compiler installed in your system.
