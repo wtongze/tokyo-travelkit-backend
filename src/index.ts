@@ -12,6 +12,10 @@ const app = express();
 const port = 4000;
 
 app.use(cors());
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'public, max-age=86400');
+  next();
+});
 app.use('/flight', flightRouter);
 app.use('/station', stationRouter);
 app.use('/railway', railwayRouter);
